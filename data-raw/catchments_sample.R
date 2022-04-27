@@ -12,4 +12,8 @@ catchments_sample <- catchments %>%
   dplyr::select(CATCHNUM, SKELUID, STRAHLER, ORDER1, ORDER2, ORDER3, BASIN, Area_Land, Area_Water, Area_Total, STRMLEN_1, FDAHUC8, ZONE, MDA, Isolated, intact) %>%
   sf::st_snap(x = ., y = ., tolerance = 0.0001)
 
+catchments_sample$CATCHNUM <- as.integer(catchments_sample$CATCHNUM)
+catchments_sample$SKELUID <- as.integer(catchments_sample$SKELUID)
+names(catchments_sample)[names(catchments_sample) == "STRMLEN_1"] <- "STRMLEN"
+
 usethis::use_data(catchments_sample, overwrite = TRUE)

@@ -57,3 +57,7 @@ test_that("Zero filter catches", {
 
 # test if filter has zero results, either by non-overlapping polygon or no intactness matches
 # test error for when areatarget_polygon_col containing a non-numeirc value
+
+
+# BUILDER
+# test and out_dir with spaces

@@ -27,7 +27,7 @@ neighbours <- function(catchments_sf){
   # Queen pattern found here: https://github.com/r-spatial/sf/issues/234
 
   # check catchnum and convert to integer
-  catchments_sf <- check_catchnum(catchments_sf)
+  catchments_sf <- make_catchnum_integer(catchments_sf)
 
   st_queen <- function(a, b = a) sf::st_relate(a, b, pattern = "****T****") # this tests for an intersect of at least one shared point between a and b
   nbr_df <- as.data.frame(st_queen(sf::st_buffer(catchments_sf, dist=0.1)))
@@ -185,7 +185,7 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
   }
 
   # check catchnum and convert to integer
-  catchments_sf <- check_catchnum(catchments_sf)
+  catchments_sf <- make_catchnum_integer(catchments_sf)
 
   # FILTER
   filtered_catchments <- catchments_sf
@@ -250,3 +250,174 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
   return(out_tab)
 }
 
+
+builder <- function(catchments_sf, out_dir = NULL, seeds, neighbours,
+                    area_type = "land", construct_benchmarks = TRUE, catchment_level_intactness = 1, area_target_multiplier = 1,
+                    handle_isolated_catchments = TRUE, output_upstream = FALSE, output_downstream = FALSE, output_hydrology_metrics = FALSE,
+                    area_land = "Area_Land", area_water = "Area_Water",
+                    skeluid = "SKELUID", catchnum = "CATCHNUM",
+                    subzone = "FDAHUC8", zone = "ZONE",
+                    basin = "BASIN", order1 = "ORDER1", order2 = "ORDER2", order3 = "ORDER3", stream_length = "STRMLEN",
+                    intactness = "intact", isolated = "Isolated",
+                    benchmark_level_intactness = 1, area_target_proportion = 1, benchmark_identifier = "PB",
+                    handler_summary = FALSE, benchmark_level_intactness_props = '""', area_target_props = '""'
+                    ){
+
+  # builder path
+  builder_cmd <- system.file("exec", "BenchmarkBuilder_cmd.exe", package = "benchmarkbuilder")
+
+  # set up output directory. Default is a temp folder. out_dir can be used if builder output should be saved, e.g. in a looped analysis.
+  if(is.null(out_dir)){
+    tmpdir <- file.path(tempdir(), "builder")
+    dir.create(tmpdir)
+    outdir <- tmpdir
+  } else{
+    outdir <- out_dir
+    dir.create(outdir, recursive = TRUE)
+  }
+
+  # save seeds table to outdir
+  message("checking seeds table")
+  seeds <- make_all_integer(seeds)
+  check_colnames(seeds, "seeds", c("CATCHNUM", "Areatarget"))
+  check_seeds_areatargets(seeds)
+  check_seeds_in_catchments(seeds, catchments_sf)
+  write.csv(seeds, file.path(outdir, "seeds.txt"), row.names = FALSE)
+
+  # save neighbours table to outdir
+  message("checking neighbours table")
+  check_colnames(neighbours, "neighbours", c("CATCHNUM", "neighbours", "key"))
+  neighbours <- make_all_integer(neighbours)
+  write.csv(neighbours, file.path(outdir, "neighbours.csv"), row.names = FALSE)
+
+  # save catchment attributes
+  catchments_csv <- sf::st_drop_geometry(catchments_sf)
+  check_colnames(catchments_csv, "catchments_sf", c(area_land, area_water, skeluid, catchnum, subzone, zone, basin, order1, order2, order3, stream_length, intactness, isolated)) # check all provided columns are present
+  catchments_csv <- make_all_character(catchments_csv, c(order1, order3, zone, subzone, basin)) # check type
+  catchments_csv <- make_all_integer(catchments_csv, c(catchnum, skeluid, isolated))
+  catchments_csv <- make_all_numeric(catchments_csv, c(order2, area_land, area_water, intactness))
+
+  catchments_file <- file.path(outdir, "catchments.csv")
+  catchments_table_name <- "catchments"
+  write.csv(catchments_csv, catchments_file, row.names = FALSE)
+
+  # convert TRUE FALSE to 1 0
+  construct_benchmarks <- logical_to_integer(construct_benchmarks)
+  handle_isolated_catchments <- logical_to_integer(handle_isolated_catchments)
+  output_upstream <- logical_to_integer(output_upstream)
+  output_downstream <- logical_to_integer(output_downstream)
+  output_hydrology_metrics <- logical_to_integer(output_hydrology_metrics)
+  handler_summary <- logical_to_integer(handler_summary)
+
+  # set system variables
+  seeds_file <- file.path(outdir, "seeds.txt")
+  seeds_table_name <- "seeds"
+  seeds_catchnum_field <- "CATCHNUM"
+  seeds_areatarget_field <- "Areatarget"
+  neighbours_file <- file.path(outdir, "neighbours.csv")
+  neighbours_file_name <- "neighbours"
+  neighbours_catchnum_field <- "CATCHNUM"
+  neighbours_neighbours_field <- "neighbours"
+
+  # construct system call
+  system_string <- paste(sep = " ",
+    builder_cmd,
+    "builder", "1",
+    outdir,
+    "catchment",
+    seeds_file,
+    seeds_table_name,
+    seeds_catchnum_field,
+    seeds_areatarget_field,
+    area_type,
+    construct_benchmarks,
+    catchment_level_intactness,
+    area_target_multiplier,
+    handle_isolated_catchments,
+    output_upstream,
+    output_downstream,
+    output_hydrology_metrics,
+    catchments_file,
+    catchments_table_name,
+    area_land,
+    area_water,
+    skeluid,
+    catchnum,
+    subzone,
+    basin,
+    order1,
+    order2,
+    order3,
+    stream_length,
+    intactness,
+    zone,
+    isolated,
+    neighbours_file,
+    neighbours_file_name,
+    neighbours_catchnum_field,
+    neighbours_neighbours_field
+  )
+
+  # call BUILDER
+  system(system_string)
+
+  # prep for HANDLER
+  h1 <- list.files(outdir, pattern = "_ROW.csv", full.names = TRUE)
+  h1 <- ifelse(length(h1) > 0, h1[[length(h1)]], '""') # if multiple, return the last one which should be most recent
+  h2 <- list.files(outdir, pattern = "_ROW_AREALAND.csv", full.names = TRUE)
+  h2 <- ifelse(length(h2) > 0, h2[[length(h2)]], '""') # if multiple, return the last one which should be most recent
+  h3 <- list.files(outdir, pattern = "_ROW_AREALAND.csv", full.names = TRUE)
+  h3 <- ifelse(length(h3) > 0, h3[[length(h3)]], '""') # if multiple, return the last one which should be most recent
+  h4 <- list.files(outdir, pattern = "_ROW_UPSTREAM_CATCHMENTS.csv", full.names = TRUE)
+  h4 <- ifelse(length(h4) > 0, h4[[length(h4)]], '""') # if multiple, return the last one which should be most recent
+  h5 <- list.files(outdir, pattern = "_ROW_DOWNSTREAM_CATCHMENTS.csv", full.names = TRUE)
+  h5 <- ifelse(length(h5) > 0, h5[[length(h5)]], '""') # if multiple, return the last one which should be most recent
+
+  # prep HANDLER system string
+  handler_string <- paste(sep = " ",
+                          builder_cmd,
+                          "handler",
+                          h1, h2, h3, h4, h5,
+                          benchmark_level_intactness,
+                          area_target_proportion,
+                          benchmark_identifier,
+                          handler_summary,
+                          benchmark_level_intactness_props,
+                          area_target_props
+                          )
+  # call HANDLER
+  system(handler_string)
+
+  # Load output tables
+  benchmarks_out <- list.files(outdir, pattern = "COLUMN_All_Unique_BAs.csv")
+  if(length(benchmarks_out) > 0){
+    if(length(benchmarks_out) > 1){
+      benchmarks_out <- benchmarks_out[[length(benchmarks_out)]]
+      warning("Multiple benchmark tables in output folder")
+    }
+  } else{
+    # clean up before throwing error
+    if(is.null(out_dir)){
+      unlink(outdir, recursive = TRUE)
+    }
+    stop("Can't find benchmarks table")
+  }
+
+  message(paste0("Returning BUILDER table: ", benchmarks_out))
+
+  out_tab <- read.csv(file.path(outdir, benchmarks_out))
+
+  # delete temp directory. If out_dir was provided, don't delete
+  if(is.null(out_dir)){
+    unlink(outdir, recursive = TRUE)
+  }
+
+  # make sure BUILDER made some benchmarks
+  if(nrow(out_tab) == 0){
+    message("No benchmarks to return, try changing the BUILDER parameters by decreasing intactness and/or area requirements")
+  }
+
+  # return
+  out_tab$OID <- NULL
+  return(out_tab)
+}
