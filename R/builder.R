@@ -59,7 +59,7 @@ neighbours <- function(catchments_sf){
 #
 #' Create a seeds table.
 #'
-#' The seeds table is an niput to BUILDER that lists seed catchments and area targets. Seed catchments are the
+#' The seeds table is an input to BUILDER that lists seed catchments and area targets. Seed catchments are the
 #' starting catchments for constructing benchmarks. This function provides various
 #' methods for filtering the catchments dataset to create seeds. Each seed requires an area target detailing
 #' the minimum area in m2 for the constructed benchmark. Various methods are provided for adding an area target
@@ -250,7 +250,113 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
   return(out_tab)
 }
 
+### seeds_reserve ###
+#
+#' Create a reserves seeds table.
+#'
+#' The reserves seeds table is an input to BUILDER that lists seed catchments and area targets for a set of reserves.
+#' Reserve seed catchments are aggregations of catchments to be built into benchmarks. Typically an aggregation represents
+#' and existing protected area. This function takes a polygon labelled with area target values and join it to the catchments
+#' to create the reserve seeds table. Reserve seeds can optionally be filtered by their intactness values.
+#'
+#' ### Aggregating reserve catchments
+#' A list of seed catchments for each reserve in \code{reserve_polygons} is selected based on their centroid (more specifically,
+#' \code{sf::st_point_on_surface()}) falling inside the reserve. Reserve names are pulled from the \code{name_col} and area
+#' targets from the \code{areatarget_col}.
+#'
+#' ### Filtering
+#' If \code{filter_intactness_col} and \code{filter_intactness_threshold} are provided, catchments will be filtered to include those
+#' with an intactness value >= the threshold. If no filter arguments are provided, all aggregated catchments in the reserve will be
+#' added to the seeds table.
+#'
+#' ### Area targets
+#' Area targets should be provided in m2 in a \code{areatarget_col} in the \code{reserve_polygons}.
+#'
+#' ### Passing to builder()
+#' The BUILDER software requires reserve seeds in a wide format csv or txt table. The output of \code{seeds_reserve()} can be converted
+#' to the wide format using \code{reserve_seeds_to_builder()}. This is done automatically by \code{builder_reserve()}.
+#'
+#' @param catchments_sf sf object of the catchments dataset with unique identifier column: CATCHNUM.
+#' @param reserve_polygons
+#' @param name_col
+#' @param areatarget_col
+#' @param filter_intactness_col Optional intactness column in \code{catchments_sf} to filter on.
+#' @param filter_intactness_threshold If \code{filter_intactness_col} provided, the minimum intactness value to filter on.
+#'
+#' @return A long tibble of seed catchments and their area targets grouped by reserve names.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data
+#' @export
+#'
+#' @examples
+#' # Convert to wide format required by BUILDER and save
+seeds_reserve <- function(catchments_sf, reserve_polygons, name_col, areatarget_col, filter_intactness_col = NULL, filter_intactness_threshold = NULL){
 
+  # CHECKS
+  # check geometry
+  check_for_geometry(catchments_sf)
+  check_for_geometry(reserve_polygons)
+
+  # check catchnum and convert to integer
+  catchments_sf <- make_catchnum_integer(catchments_sf)
+
+  # check reserve_polygons columns
+  if(!all(c(name_col, areatarget_col) %in% colnames(reserve_polygons))){
+    stop(paste0("'reserve_polygons' must have columns '", name_col, "' and '", areatarget_col, "'"))
+  }
+
+  # if filter_intactness_col, filter_intactness_threshold must be provided
+  if(!is.null(filter_intactness_col)){
+    if(!is.numeric(filter_intactness_threshold)){
+      stop("filter_intactness_threshold must be provided with a filter_intactness_col")
+    }
+  }
+
+  # FILTER
+  filtered_catchments <- catchments_sf
+  sf::st_agr(filtered_catchments) = "constant"
+
+  # filter by intactness
+  if(!is.null(filter_intactness_col)){
+
+    filtered_catchments <- filtered_catchments %>%
+      dplyr::filter(.data[[filter_intactness_col]] >= as.numeric(filter_intactness_threshold))
+  }
+
+  # AGGREGATE
+  # get catchnums in each reserve polygon
+  catch_within <- filtered_catchments %>%
+    sf::st_point_on_surface() %>% # get catchment centroids.
+    sf::st_within(reserve_polygons) %>% # test within for all centroids, returns a row for each match. row.id is a catchnum index, col.id is a reserve index.
+    as.data.frame()
+  filtered_catchments$key <- 1:nrow(filtered_catchments) # add a key column to sf table. Must be an index to match st_within output
+  sf_catch_key <- sf::st_drop_geometry(filtered_catchments[c("key","CATCHNUM")])
+  reserve_polygons$key <- 1:nrow(reserve_polygons) # add key to reserve_polygons
+  reserve_key <- sf::st_drop_geometry(reserve_polygons[c("key", name_col, areatarget_col)])
+
+  # convert indexes from st_within to catchnums using the keys to join
+  out_tab <- catch_within %>%
+    dplyr::left_join(sf_catch_key, by = c("row.id" = "key")) %>%
+    dplyr::left_join(reserve_key, by = c("col.id" = "key")) %>%
+    dplyr::select(.data[[name_col]], .data[[areatarget_col]], .data$CATCHNUM) %>%
+    dplyr::arrange(.data[[name_col]], "CATCHNUM") %>%
+    dplyr::tibble()
+
+  return(out_tab)
+}
+
+### reserve_seeds_to_builder
+reserve_seeds_to_builder <- function(seeds_reserve_long, name_col, areatarget_col){
+
+  out_tab <- seeds_reserve_long %>%
+    group_by(.data[[name_col]], .data[[areatarget_col]]) %>%
+    summarise(CATCHNUMS = paste(.data$CATCHNUM, collapse=","))
+
+  return(out_tab)
+}
+
+### builder
 builder <- function(catchments_sf, out_dir = NULL, seeds, neighbours,
                     area_type = "land", construct_benchmarks = TRUE, catchment_level_intactness = 1, area_target_multiplier = 1,
                     handle_isolated_catchments = TRUE, output_upstream = FALSE, output_downstream = FALSE, output_hydrology_metrics = FALSE,
@@ -421,3 +527,5 @@ builder <- function(catchments_sf, out_dir = NULL, seeds, neighbours,
   out_tab$OID <- NULL
   return(out_tab)
 }
+
+### builder_reserves
