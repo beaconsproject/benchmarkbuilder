@@ -36,7 +36,7 @@ seeds(
 A tibble of seed catchments and their area targets.
 }
 \description{
-The seeds table is an niput to BUILDER that lists seed catchments and area targets. Seed catchments are the
+The seeds table is an input to BUILDER that lists seed catchments and area targets. Seed catchments are the
 starting catchments for constructing benchmarks. This function provides various
 methods for filtering the catchments dataset to create seeds. Each seed requires an area target detailing
 the minimum area in m2 for the constructed benchmark. Various methods are provided for adding an area target
