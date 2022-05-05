@@ -49,15 +49,64 @@ test_that("polygon filter works with intactness col", {
   )
 })
 
+test_that("polygon filter works with areatarget_polygon_col", {
+  test_poly <- catchments_sample[1:10,]
+  test_poly$areatarget <- 5000
+  expect_warning(
+    expect_equal(seeds(catchments_sf = catchments_sample, filter_polygon = test_poly, areatarget_polygon = test_poly, areatarget_polygon_col = "areatarget"),
+               tibble(CATCHNUM=catchments_sample$CATCHNUM[1:10], Areatarget = as.integer(rep(5000, 10)))
+               ),
+    "attribute variables are assumed")
+})
+
+test_that("error when areatarget_polygon_col contains a non-numeirc value", {
+  test_poly <- catchments_sample[1:10,]
+  test_poly$areatarget <- "x"
+  expect_error(seeds(catchments_sf = catchments_sample, filter_polygon = test_poly, areatarget_polygon = test_poly, areatarget_polygon_col = "areatarget"),
+             "values in areatarget_polygon must be numeric")
+})
+
 test_that("Zero filter catches", {
   expect_error(seeds(catchments_sf = catchments_sample, filter_intactness_col = "intact", filter_intactness_threshold = 1.1, areatarget_value = 1000),
                "No catchments selected"
                )
 })
 
-# test if filter has zero results, either by non-overlapping polygon or no intactness matches
-# test error for when areatarget_polygon_col containing a non-numeirc value
+# seeds_reserve
+test_that("check reserve polygon colnames error", {
+  existing_reserves_sample$areatarget <- 100000
+  expect_error(seeds_reserve(catchments_sf = catchments_sample, reserve_polygons = existing_reserves_sample, name_col = "reserve", areatarget_col = "y"),
+               "Column 'y' not in table")
+})
+
+test_that("check intactness col error", {
+  existing_reserves_sample$areatarget <- 100000
+  expect_error(seeds_reserve(catchments_sf = catchments_sample, reserve_polygons = existing_reserves_sample, name_col = "reserve", areatarget_col = "areatarget",
+                             filter_intactness_col = "intacnt", filter_intactness_threshold = 1),
+               "Column 'intacnt' not in table")
+})
+
+test_that("check intactness val", {
+  existing_reserves_sample$areatarget <- 100000
+  expect_error(seeds_reserve(catchments_sf = catchments_sample, reserve_polygons = existing_reserves_sample, name_col = "reserve", areatarget_col = "areatarget",
+                             filter_intactness_col = "intact", filter_intactness_threshold = "x"),
+               "filter_intactness_threshold must be provided")
+})
+
+test_that("check basic usage", {
+  existing_reserves_sample$areatarget <- 100000
+  expect_snapshot(as.data.frame(seeds_reserve(catchments_sf = catchments_sample, reserve_polygons = existing_reserves_sample, name_col = "reserve", areatarget_col = "areatarget")))
+})
+
+test_that("check intactness filter", {
+  existing_reserves_sample$areatarget <- 100000.5
+  expect_snapshot(as.data.frame(seeds_reserve(catchments_sf = catchments_sample, reserve_polygons = existing_reserves_sample, name_col = "reserve", areatarget_col = "areatarget",
+                                              filter_intactness_col = "intact", filter_intactness_threshold = 1)))
+})
+
 
 
 # BUILDER
-# test and out_dir with spaces
+# test an out_dir with spaces
+# test an invalid out_dir
+
