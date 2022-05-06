@@ -233,7 +233,7 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
 
     # subset areatarget_polygon to drop any columns that might interfere with join (e.g. a CATCHNUM col)
     areatarget_polygon <- areatarget_polygon %>%
-      select(areatarget_polygon_col)
+      dplyr::select(areatarget_polygon_col)
 
     sf::st_agr(areatarget_polygon) = "constant"
     sf::st_agr(filtered_catchments) = "constant"
@@ -281,9 +281,9 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
 #' to the wide format using \code{reserve_seeds_to_builder()}. This is done automatically by \code{builder_reserve()}.
 #'
 #' @param catchments_sf sf object of the catchments dataset with unique identifier column: CATCHNUM.
-#' @param reserve_polygons
-#' @param name_col
-#' @param areatarget_col
+#' @param reserve_polygons sf object of reserves used to select reserve seed catchments.
+#' @param name_col Name of column in \code{reserve_polygons} holding unique reserve names.
+#' @param areatarget_col Name of column in \code{reserve_polygons} holding area target in m2 for each reserve.
 #' @param filter_intactness_col Optional intactness column in \code{catchments_sf} to filter on.
 #' @param filter_intactness_threshold If \code{filter_intactness_col} provided, the minimum intactness value to filter on.
 #'
@@ -299,10 +299,11 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
 #' seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2", "intact", 1)
 #'
 #' # Save as wide format required by BUILDER and save
-#' write.csv(
+#' seeds_reserve_wide <-
 #'   reserve_seeds_to_builder(
-#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")),
-#'   "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
+#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+#'     )
+#' #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 seeds_reserve <- function(catchments_sf, reserve_polygons, name_col, areatarget_col, filter_intactness_col = NULL, filter_intactness_threshold = NULL){
 
   # CHECKS
@@ -389,15 +390,16 @@ seeds_reserve <- function(catchments_sf, reserve_polygons, name_col, areatarget_
 #'
 #' @examples
 #' existing_reserves_sample$areatarget_m2 <- 100000000
-#' write.csv(
+#' seeds_reserve_wide <-
 #'   reserve_seeds_to_builder(
-#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")),
-#'   "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
+#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+#'     )
+#' #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 reserve_seeds_to_builder <- function(seeds_reserve_long){
 
   out_tab <- seeds_reserve_long %>%
-    group_by(.data$Name, .data$Areatarget) %>%
-    summarise(CATCHNUMS = paste(.data$CATCHNUM, collapse=","))
+    dplyr::group_by(.data$Name, .data$Areatarget) %>%
+    dplyr::summarise(CATCHNUMS = paste(.data$CATCHNUM, collapse=","))
 
   return(out_tab)
 }
@@ -477,8 +479,13 @@ reserve_seeds_to_builder <- function(seeds_reserve_long){
 #' @export
 #'
 #' @examples
-#' xxx
-
+#' nghbrs <- neighbours(catchments_sample)
+#' # select 10 seeds with 100% intactness for the example. Build benchmarks to 500km2.
+#' seed <- seeds(catchments_sf = catchments_sample,
+#'               filter_intactness_col = "intact", filter_intactness_threshold = 1,
+#'               areatarget_value = 500000000)
+#' seed <- seed[1:10,]
+#' builder(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs)
 builder <- function(catchments_sf, seeds, neighbours, # input tables
                     out_dir = NULL, # output dir
                     catchment_level_intactness = 1, benchmark_level_intactness = 1, area_target_proportion = 1, # main parameters
@@ -496,11 +503,19 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
   # set up output directory. Default is a temp folder. out_dir can be used if builder output should be saved, e.g. in a looped analysis.
   if(is.null(out_dir)){
     tmpdir <- file.path(tempdir(), "builder")
-    dir.create(tmpdir)
+    if(!dir.exists(tmpdir)){
+      dir.create(tmpdir)
+    }
     outdir <- tmpdir
   } else{
     outdir <- out_dir
-    dir.create(outdir, recursive = TRUE)
+    # check no spaces
+    if(grepl(" ", outdir)){
+      stop("out_dir cannot have spaces")
+    }
+    if(!dir.exists(outdir)){
+      dir.create(outdir, recursive = TRUE)
+    }
   }
 
   # save seeds table to outdir
@@ -509,13 +524,13 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
   check_colnames(seeds, "seeds", c("CATCHNUM", "Areatarget"))
   check_seeds_areatargets(seeds)
   check_seeds_in_catchments(seeds, catchments_sf)
-  write.csv(seeds, file.path(outdir, "seeds.txt"), row.names = FALSE)
+  utils::write.csv(seeds, file.path(outdir, "seeds.txt"), row.names = FALSE)
 
   # save neighbours table to outdir
   message("checking neighbours table")
   check_colnames(neighbours, "neighbours", c("CATCHNUM", "neighbours", "key"))
   neighbours <- make_all_integer(neighbours)
-  write.csv(neighbours, file.path(outdir, "neighbours.csv"), row.names = FALSE)
+  utils::write.csv(neighbours, file.path(outdir, "neighbours.csv"), row.names = FALSE)
 
   # save catchment attributes
   catchments_csv <- sf::st_drop_geometry(catchments_sf)
@@ -526,7 +541,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 
   catchments_file <- file.path(outdir, "catchments.csv")
   catchments_table_name <- "catchments"
-  write.csv(catchments_csv, catchments_file, row.names = FALSE)
+  utils::write.csv(catchments_csv, catchments_file, row.names = FALSE)
 
   # convert TRUE FALSE to 1 0
   construct_benchmarks <- logical_to_integer(construct_benchmarks)
@@ -632,7 +647,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 
   message(paste0("Returning BUILDER table: ", benchmarks_out))
 
-  out_tab <- read.csv(file.path(outdir, benchmarks_out))
+  out_tab <- utils::read.csv(file.path(outdir, benchmarks_out))
 
   # delete temp directory. If out_dir was provided, don't delete
   if(is.null(out_dir)){
@@ -641,7 +656,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 
   # make sure BUILDER made some benchmarks
   if(nrow(out_tab) == 0){
-    message("No benchmarks to return, try changing the BUILDER parameters by decreasing intactness and/or area requirements")
+    warning("No benchmarks to return, try changing the BUILDER parameters by decreasing intactness and/or area requirements")
     return(NULL)
   }
 
@@ -719,6 +734,21 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 #' @param area_target_props If a summary is created, provide the area target proportions to be summarised in the format '0.7,0.8,0.9'.
 #'
 #' @return A tibble with column names representing benchmarks, and rows of catchments making up the benchmarks.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data
+#' @export
+#'
+#' @examples
+#' # Build reserves out to 1000km using all catchments at least 50% intact.
+#' # Return any options with an area-weighted intactness of at least 80%.
+#' nghbrs <- neighbours(catchments_sample)
+#' existing_reserves_sample$Areatarget <- 1000000000
+#' seed <- seeds_reserve(catchments_sf = catchments_sample,
+#'                       reserve_polygons = existing_reserves_sample,
+#'                       name_col = "reserve", areatarget_col = "Areatarget")
+#' builder_reserve(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs,
+#'                 catchment_level_intactness = 0.5, benchmark_level_intactness = 0.8)
 builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
                             out_dir = NULL, # output dir
                             catchment_level_intactness = 1, benchmark_level_intactness = 1, area_target_proportion = 1,
@@ -735,11 +765,19 @@ builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
   # set up output directory. Default is a temp folder. out_dir can be used if builder output should be saved, e.g. in a looped analysis.
   if(is.null(out_dir)){
     tmpdir <- file.path(tempdir(), "builder")
-    dir.create(tmpdir)
+    if(!dir.exists(tmpdir)){
+      dir.create(tmpdir)
+    }
     outdir <- tmpdir
   } else{
     outdir <- out_dir
-    dir.create(outdir, recursive = TRUE)
+    # check no spaces
+    if(grepl(" ", outdir)){
+      stop("out_dir cannot have spaces")
+    }
+    if(!dir.exists(outdir)){
+      dir.create(outdir, recursive = TRUE)
+    }
   }
 
   # save seeds table to outdir
@@ -748,14 +786,19 @@ builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
   seeds <- make_all_integer(seeds, c("CATCHNUM", "Areatarget"))
   seeds <- make_all_character(seeds, c("Name"))
   check_seeds_areatargets(seeds)
-  check_seeds_in_catchments(seeds, catchments_sf)
-  write.csv(reserve_seeds_to_builder(seeds), file.path(outdir, "seeds.txt"), row.names = FALSE, quote = FALSE)
+
+  # For reserve seeds, builder throws error if all catchnums are not present
+  if(!all(seeds$CATCHNUM %in% catchments_sf$CATCHNUM)){
+    stop("All reserve seeds must be in catchments_sf")
+  }
+
+  utils::write.csv(reserve_seeds_to_builder(seeds), file.path(outdir, "seeds.txt"), row.names = FALSE, quote = FALSE)
 
   # save neighbours table to outdir
   message("checking neighbours table")
   check_colnames(neighbours, "neighbours", c("CATCHNUM", "neighbours", "key"))
   neighbours <- make_all_integer(neighbours)
-  write.csv(neighbours, file.path(outdir, "neighbours.csv"), row.names = FALSE)
+  utils::write.csv(neighbours, file.path(outdir, "neighbours.csv"), row.names = FALSE)
 
   # save catchment attributes
   catchments_csv <- sf::st_drop_geometry(catchments_sf)
@@ -766,7 +809,7 @@ builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
 
   catchments_file <- file.path(outdir, "catchments.csv")
   catchments_table_name <- "catchments"
-  write.csv(catchments_csv, catchments_file, row.names = FALSE)
+  utils::write.csv(catchments_csv, catchments_file, row.names = FALSE)
 
   # convert TRUE FALSE to 1 0
   construct_benchmarks <- logical_to_integer(construct_benchmarks)
@@ -874,7 +917,7 @@ builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
 
   message(paste0("Returning BUILDER table: ", benchmarks_out))
 
-  out_tab <- read.csv(file.path(outdir, benchmarks_out))
+  out_tab <- utils::read.csv(file.path(outdir, benchmarks_out))
 
   # delete temp directory. If out_dir was provided, don't delete
   if(is.null(out_dir)){
@@ -883,7 +926,7 @@ builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
 
   # make sure BUILDER made some benchmarks
   if(nrow(out_tab) == 0){
-    message("No benchmarks to return, try changing the BUILDER parameters by decreasing intactness and/or area requirements")
+    warning("No benchmarks to return, try changing the BUILDER parameters by decreasing intactness and/or area requirements")
     return(NULL)
   }
 

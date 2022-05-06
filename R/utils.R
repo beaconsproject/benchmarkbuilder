@@ -35,7 +35,7 @@ check_seeds_areatargets <- function(seeds){
 check_seeds_in_catchments <- function(seeds, catchments_sf){
   if(!all(seeds$CATCHNUM %in% catchments_sf$CATCHNUM)){
     if(any(seeds$CATCHNUM %in% catchments_sf$CATCHNUM)){
-      warnings("Not all seeds are in catchments_sf") # warning if some are present and builder can run
+      warning("Not all seeds are in catchments_sf") # warning if some are present and builder can run
     } else{
       stop("None of the seeds are in catchments_sf") # error if no seeds are present
     }

@@ -16,6 +16,12 @@ seeds_reserve(
 \arguments{
 \item{catchments_sf}{sf object of the catchments dataset with unique identifier column: CATCHNUM.}
 
+\item{reserve_polygons}{sf object of reserves used to select reserve seed catchments.}
+
+\item{name_col}{Name of column in \code{reserve_polygons} holding unique reserve names.}
+
+\item{areatarget_col}{Name of column in \code{reserve_polygons} holding area target in m2 for each reserve.}
+
 \item{filter_intactness_col}{Optional intactness column in \code{catchments_sf} to filter on.}
 
 \item{filter_intactness_threshold}{If \code{filter_intactness_col} provided, the minimum intactness value to filter on.}
@@ -61,8 +67,9 @@ seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarge
 seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2", "intact", 1)
 
 # Save as wide format required by BUILDER and save
-write.csv(
+seeds_reserve_wide <-
   reserve_seeds_to_builder(
-    seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")),
-  "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
+    seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+    )
+#write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 }

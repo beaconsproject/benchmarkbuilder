@@ -16,6 +16,10 @@ catchments_sample$CATCHNUM <- as.integer(catchments_sample$CATCHNUM)
 catchments_sample$SKELUID <- as.integer(catchments_sample$SKELUID)
 names(catchments_sample)[names(catchments_sample) == "STRMLEN_1"] <- "STRMLEN"
 
+catchments_sample$ZONE <- as.character(catchments_sample$ZONE)
+catchments_sample$BASIN <- as.character(catchments_sample$BASIN)
+catchments_sample$Isolated <- as.integer(catchments_sample$Isolated)
+
 usethis::use_data(catchments_sample, overwrite = TRUE)
 
 

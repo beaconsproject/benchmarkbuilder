@@ -2,7 +2,7 @@ Package: benchmarkbuilder
 Title: Constructs ecological benchmarks using the Benchmark BUILDER software
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Marc", "Edwards", , "me1@uablerta.ca", role = c("aut", "cre"),
+    person("Marc", "Edwards", , "me1@ualberta.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0800-8002")),
     person("BEACONs Project", role = c("cph", "fnd"))
     )
@@ -23,3 +23,5 @@ LazyData: true
 Suggests: 
     testthat (>= 3.0.0),
 Config/testthat/edition: 3
+SystemRequirements:
+    exec/BenchmarkBuilder_cmd.exe
