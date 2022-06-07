@@ -28,7 +28,7 @@ table to pass directly to the BUILDER software GUI (outside of R).
 existing_reserves_sample$areatarget_m2 <- 100000000
 seeds_reserve_wide <-
   reserve_seeds_to_builder(
-    seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+    seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
     )
 #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 }

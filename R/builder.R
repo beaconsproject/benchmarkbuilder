@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-#' neighbours(catchments_sample)
+#' neighbours(builder_catchments_sample)
 #'
 neighbours <- function(catchments_sf){
   # Generate neighbours where single point is shared
@@ -105,14 +105,14 @@ neighbours <- function(catchments_sf){
 #'
 #' @examples
 #' # Use all catchments as seeds, single area target
-#' seeds(catchments_sf = catchments_sample, areatarget_value = 1000000000)
+#' seeds(catchments_sf = builder_catchments_sample, areatarget_value = 1000000000)
 #'
 #' # Use all catchments as seeds, column area target
-#' catchments_sample$area_target <- 1000000000
-#' seeds(catchments_sf = catchments_sample, areatarget_col = "area_target")
+#' builder_catchments_sample$area_target <- 1000000000
+#' seeds(catchments_sf = builder_catchments_sample, areatarget_col = "area_target")
 #'
 #' # Filter based on intactness
-#' seeds(catchments_sf = catchments_sample,
+#' seeds(catchments_sf = builder_catchments_sample,
 #'       filter_intactness_col = "intact", filter_intactness_threshold = 1,
 #'       areatarget_value = 1000000000)
 #'
@@ -127,8 +127,8 @@ neighbours <- function(catchments_sf){
 #'            group_by(Areatarget) %>%
 #'            summarise(geometry = st_combine(geometry)) %>%
 #'            st_cast("POLYGON") %>%
-#'            st_transform(st_crs(catchments_sample))
-#' seeds(catchments_sf = catchments_sample,
+#'            st_transform(st_crs(builder_catchments_sample))
+#' seeds(catchments_sf = builder_catchments_sample,
 #'       filter_polygon = ref_poly,
 #'       areatarget_polygon = ref_poly, areatarget_polygon_col = "Areatarget")
 #'
@@ -295,13 +295,14 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
 #'
 #' @examples
 #' existing_reserves_sample$areatarget_m2 <- 100000000
-#' seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
-#' seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2", "intact", 1)
+#' seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+#' seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve",
+#'               "areatarget_m2", "intact", 1)
 #'
 #' # Save as wide format required by BUILDER and save
 #' seeds_reserve_wide <-
 #'   reserve_seeds_to_builder(
-#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+#'     seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
 #'     )
 #' #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 seeds_reserve <- function(catchments_sf, reserve_polygons, name_col, areatarget_col, filter_intactness_col = NULL, filter_intactness_threshold = NULL){
@@ -392,7 +393,7 @@ seeds_reserve <- function(catchments_sf, reserve_polygons, name_col, areatarget_
 #' existing_reserves_sample$areatarget_m2 <- 100000000
 #' seeds_reserve_wide <-
 #'   reserve_seeds_to_builder(
-#'     seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+#'     seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
 #'     )
 #' #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 reserve_seeds_to_builder <- function(seeds_reserve_long){
@@ -440,7 +441,7 @@ reserve_seeds_to_builder <- function(seeds_reserve_long){
 #' @param seeds Seeds table from \code{seeds()} listing seed catchments and area targets.
 #' @param neighbours Neighbours table from \code{neighbours()} listing all neighbouring pairs of catchments.
 #' @param out_dir If provided, input (seeds, neighbours and catchments) files and output BUILDER tables will be saved to this directory. Otherwise
-#' a temp directory will be used.
+#' a temp directory will be used. Function will attempt to create the directory if it doesn't already exist.
 #' @param catchment_level_intactness Minimum intactness value for catchment inclusion (between 0-1). i.e. if value of 1 is used, only 100% intact
 #' catchments will be used to build benchmarks.
 #' @param benchmark_level_intactness Minimum area-weighted intactness of final benchmarks. Only benchmarks meeting this value will be returned.
@@ -479,13 +480,13 @@ reserve_seeds_to_builder <- function(seeds_reserve_long){
 #' @export
 #'
 #' @examples
-#' nghbrs <- neighbours(catchments_sample)
+#' nghbrs <- neighbours(builder_catchments_sample)
 #' # select 10 seeds with 100% intactness for the example. Build benchmarks to 500km2.
-#' seed <- seeds(catchments_sf = catchments_sample,
+#' seed <- seeds(catchments_sf = builder_catchments_sample,
 #'               filter_intactness_col = "intact", filter_intactness_threshold = 1,
 #'               areatarget_value = 500000000)
 #' seed <- seed[1:10,]
-#' builder(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs)
+#' builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs)
 builder <- function(catchments_sf, seeds, neighbours, # input tables
                     out_dir = NULL, # output dir
                     catchment_level_intactness = 1, benchmark_level_intactness = 1, area_target_proportion = 1, # main parameters
@@ -701,7 +702,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 #' @param seeds Seeds table from \code{seeds_reserve()} listing reserve names, seed catchments and area targets.
 #' @param neighbours Neighbours table from \code{neighbours()} listing all neighbouring pairs of catchments.
 #' @param out_dir If provided, input (seeds, neighbours and catchments) files and output BUILDER tables will be saved to this directory. Otherwise
-#' a temp directory will be used.
+#' a temp directory will be used. Function will attempt to create the directory if it doesn't already exist.
 #' @param catchment_level_intactness Minimum intactness value for catchment inclusion (between 0-1). i.e. if value of 1 is used, only 100% intact
 #' catchments will be used to build benchmarks.
 #' @param benchmark_level_intactness Minimum area-weighted intactness of final benchmarks. Only benchmarks meeting this value will be returned.
@@ -742,12 +743,12 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 #' @examples
 #' # Build reserves out to 1000km using all catchments at least 50% intact.
 #' # Return any options with an area-weighted intactness of at least 80%.
-#' nghbrs <- neighbours(catchments_sample)
+#' nghbrs <- neighbours(builder_catchments_sample)
 #' existing_reserves_sample$Areatarget <- 1000000000
-#' seed <- seeds_reserve(catchments_sf = catchments_sample,
+#' seed <- seeds_reserve(catchments_sf = builder_catchments_sample,
 #'                       reserve_polygons = existing_reserves_sample,
 #'                       name_col = "reserve", areatarget_col = "Areatarget")
-#' builder_reserve(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs,
+#' builder_reserve(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
 #'                 catchment_level_intactness = 0.5, benchmark_level_intactness = 0.8)
 builder_reserve <- function(catchments_sf, seeds, neighbours, # input tables
                             out_dir = NULL, # output dir

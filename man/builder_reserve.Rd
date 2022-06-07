@@ -46,7 +46,7 @@ builder_reserve(
 \item{neighbours}{Neighbours table from \code{neighbours()} listing all neighbouring pairs of catchments.}
 
 \item{out_dir}{If provided, input (seeds, neighbours and catchments) files and output BUILDER tables will be saved to this directory. Otherwise
-a temp directory will be used.}
+a temp directory will be used. Function will attempt to create the directory if it doesn't already exist.}
 
 \item{catchment_level_intactness}{Minimum intactness value for catchment inclusion (between 0-1). i.e. if value of 1 is used, only 100\% intact
 catchments will be used to build benchmarks.}
@@ -141,11 +141,11 @@ benchmarks).}
 \examples{
 # Build reserves out to 1000km using all catchments at least 50\% intact.
 # Return any options with an area-weighted intactness of at least 80\%.
-nghbrs <- neighbours(catchments_sample)
+nghbrs <- neighbours(builder_catchments_sample)
 existing_reserves_sample$Areatarget <- 1000000000
-seed <- seeds_reserve(catchments_sf = catchments_sample,
+seed <- seeds_reserve(catchments_sf = builder_catchments_sample,
                       reserve_polygons = existing_reserves_sample,
                       name_col = "reserve", areatarget_col = "Areatarget")
-builder_reserve(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs,
+builder_reserve(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
                 catchment_level_intactness = 0.5, benchmark_level_intactness = 0.8)
 }

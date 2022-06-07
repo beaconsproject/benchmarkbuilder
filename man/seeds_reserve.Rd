@@ -63,13 +63,14 @@ to the wide format using \code{reserve_seeds_to_builder()}. This is done automat
 }
 \examples{
 existing_reserves_sample$areatarget_m2 <- 100000000
-seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
-seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2", "intact", 1)
+seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve",
+              "areatarget_m2", "intact", 1)
 
 # Save as wide format required by BUILDER and save
 seeds_reserve_wide <-
   reserve_seeds_to_builder(
-    seeds_reserve(catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
+    seeds_reserve(builder_catchments_sample, existing_reserves_sample, "reserve", "areatarget_m2")
     )
 #write.csv(seeds_reserve_wide, "reserve_seeds.csv", quote = FALSE, row.names = FALSE)
 }

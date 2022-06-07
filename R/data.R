@@ -4,7 +4,7 @@
 #'
 #' @format A sf object with 3263 features and 16 fields.
 #' @source \url{https://beaconsproject.ualberta.ca/}
-"catchments_sample"
+"builder_catchments_sample"
 
 #' Sample of existing protected areas clipped to FDA 09EA.
 #'

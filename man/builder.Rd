@@ -46,7 +46,7 @@ builder(
 \item{neighbours}{Neighbours table from \code{neighbours()} listing all neighbouring pairs of catchments.}
 
 \item{out_dir}{If provided, input (seeds, neighbours and catchments) files and output BUILDER tables will be saved to this directory. Otherwise
-a temp directory will be used.}
+a temp directory will be used. Function will attempt to create the directory if it doesn't already exist.}
 
 \item{catchment_level_intactness}{Minimum intactness value for catchment inclusion (between 0-1). i.e. if value of 1 is used, only 100\% intact
 catchments will be used to build benchmarks.}
@@ -139,11 +139,11 @@ benchmarks).}
 }
 }
 \examples{
-nghbrs <- neighbours(catchments_sample)
+nghbrs <- neighbours(builder_catchments_sample)
 # select 10 seeds with 100\% intactness for the example. Build benchmarks to 500km2.
-seed <- seeds(catchments_sf = catchments_sample,
+seed <- seeds(catchments_sf = builder_catchments_sample,
               filter_intactness_col = "intact", filter_intactness_threshold = 1,
               areatarget_value = 500000000)
 seed <- seed[1:10,]
-builder(catchments_sf = catchments_sample, seeds = seed, neighbours = nghbrs)
+builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs)
 }

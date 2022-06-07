@@ -17,6 +17,6 @@ For an sf object of catchments with unique CATCHNUM id's, calculates a list of n
 and returns them in a long tibble. Neighbours are defined as having at least on point in common (within 0.1m).
 }
 \examples{
-neighbours(catchments_sample)
+neighbours(builder_catchments_sample)
 
 }

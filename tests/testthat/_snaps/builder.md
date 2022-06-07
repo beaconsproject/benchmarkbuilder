@@ -21550,7 +21550,7 @@
 # check basic usage
 
     Code
-      as.data.frame(seeds_reserve(catchments_sf = catchments_sample,
+      as.data.frame(seeds_reserve(catchments_sf = builder_catchments_sample,
         reserve_polygons = existing_reserves_sample, name_col = "reserve",
         areatarget_col = "areatarget"))
     Output
@@ -21703,7 +21703,7 @@
 # check intactness filter
 
     Code
-      as.data.frame(seeds_reserve(catchments_sf = catchments_sample,
+      as.data.frame(seeds_reserve(catchments_sf = builder_catchments_sample,
         reserve_polygons = existing_reserves_sample, name_col = "reserve",
         areatarget_col = "areatarget", filter_intactness_col = "intact",
         filter_intactness_threshold = 1))
@@ -21826,7 +21826,7 @@
 # check table conversion
 
     Code
-      as.data.frame(reserve_seeds_to_builder(seeds_reserve(catchments_sf = catchments_sample,
+      as.data.frame(reserve_seeds_to_builder(seeds_reserve(catchments_sf = builder_catchments_sample,
         reserve_polygons = existing_reserves_sample, name_col = "reserve",
         areatarget_col = "areatarget")))
     Output

@@ -1,4 +1,4 @@
-## code to prepare `catchments_sample` dataset goes here
+## code to prepare `builder_catchments_sample` dataset goes here
 
 library(sf)
 library(dplyr)
@@ -7,20 +7,20 @@ library(devtools)
 # load catchments from kba project (just using this dataset because its synced on my laptop, could also load full dataset from gisdata)
 catchments <- sf::st_read("C:/Users/MAEDW7/Dropbox (BEACONs)/RENR491 Capstone 2022/gisdata/catchments/YRW_catch50K.shp")
 
-catchments_sample <- catchments %>%
+builder_catchments_sample <- catchments %>%
   dplyr::filter(FDAHUC8 == "09EA") %>%
   dplyr::select(CATCHNUM, SKELUID, STRAHLER, ORDER1, ORDER2, ORDER3, BASIN, Area_Land, Area_Water, Area_Total, STRMLEN_1, FDAHUC8, ZONE, MDA, Isolated, intact) %>%
   sf::st_snap(x = ., y = ., tolerance = 0.1)
 
-catchments_sample$CATCHNUM <- as.integer(catchments_sample$CATCHNUM)
-catchments_sample$SKELUID <- as.integer(catchments_sample$SKELUID)
-names(catchments_sample)[names(catchments_sample) == "STRMLEN_1"] <- "STRMLEN"
+builder_catchments_sample$CATCHNUM <- as.integer(builder_catchments_sample$CATCHNUM)
+builder_catchments_sample$SKELUID <- as.integer(builder_catchments_sample$SKELUID)
+names(builder_catchments_sample)[names(builder_catchments_sample) == "STRMLEN_1"] <- "STRMLEN"
 
-catchments_sample$ZONE <- as.character(catchments_sample$ZONE)
-catchments_sample$BASIN <- as.character(catchments_sample$BASIN)
-catchments_sample$Isolated <- as.integer(catchments_sample$Isolated)
+builder_catchments_sample$ZONE <- as.character(builder_catchments_sample$ZONE)
+builder_catchments_sample$BASIN <- as.character(builder_catchments_sample$BASIN)
+builder_catchments_sample$Isolated <- as.integer(builder_catchments_sample$Isolated)
 
-usethis::use_data(catchments_sample, overwrite = TRUE)
+usethis::use_data(builder_catchments_sample, overwrite = TRUE)
 
 
 # get existing reserves in FDA 09EA
@@ -28,11 +28,11 @@ temp <- file.path(tempdir(), "CPCAD-BDCAPC_Dec2021.gdb.zip")
 download.file("https://cws-scf.ca/CPCAD-BDCAPC_Dec2021.gdb.zip", temp) # unzip manually in temp file
 reserves <- st_read(file.path(tempdir(), "CPCAD-BDCAPC_Dec2021.gdb/CPCAD-BDCAPC_Dec2021.gdb"), layer = "CPCAD_BDCAPC_Dec2021")
 
-reserves <- st_transform(reserves, st_crs(catchments_sample))
+reserves <- st_transform(reserves, st_crs(builder_catchments_sample))
 names(reserves)[names(reserves) == "Shape"] <- "geometry"
 st_geometry(reserves)="geometry"
 
-fda <- catchments_sample %>%
+fda <- builder_catchments_sample %>%
   summarise(geometry = st_union(geometry))
 
 reserves <- reserves[reserves$NAME_E == "Tombstone",]
