@@ -32,7 +32,7 @@ The building blocks for BUILDER is a set of catchments with associated flow dire
 ## Aggregation algorithm
 BUILDER ‘grows’ ecological benchmarks using a deterministic construction algorithm that aggregates catchments. This process enables intactness, size and hydrologic criteria to be incorporated into benchmark design.   
 
-The starting catchments for building benchmarks are called seeds. Benchmarks can be built from individual seeds or from collections of seeds representing existing reserves. Starting from a seed, BUILDER grows a benchmark by aggregating neighbouring catchments that exceed the user defined catchment level intactness threshold. As catchments are added, growth is prioritized in the upstream direction. This emphasizes inclusion of headwaters within benchmarks, and encourages the formation of benchmarks along stream networks. Further, by adding all eligible upstream catchments before re-querying for more, benchmarks are grown with a more compact shape. If re-querying were to occur after adding each upstream catchment, benchmarks would tend to grow along single streams, resulting in linear configurations. To further compact the shape of the benchmark, BUILDER prioritizes the addition of catchments within hydrological zones (i.e. Fundamental Drainage Areas, FDAs) associated with the benchmark before adding catchments in a neighbouring FDA.  
+The starting catchments for building benchmarks are called seeds. Starting from a seed, BUILDER grows a benchmark by aggregating neighbouring catchments that exceed the user defined catchment level intactness threshold. As catchments are added, growth is prioritized in the upstream direction. This emphasizes inclusion of headwaters within benchmarks, and encourages the formation of benchmarks along stream networks. Further, by adding all eligible upstream catchments before re-querying for more, benchmarks are grown with a more compact shape. If re-querying were to occur after adding each upstream catchment, benchmarks would tend to grow along single streams, resulting in linear configurations. To further compact the shape of the benchmark, BUILDER prioritizes the addition of catchments within hydrological zones (i.e. Fundamental Drainage Areas, FDAs) associated with the benchmark before adding catchments in a neighbouring FDA.  
 
 Once all available upstream catchments are added, BUILDER grows downstream. Downstream growth adds all neighbouring catchments downstream of the catchment aggregation then re-queries for upstream catchments. Benchmarks are grown until: 
 
@@ -45,26 +45,19 @@ If the latter occurs, and the area-weighted intactness of the benchmark exceeds 
 
 **neighbours()**
 
-Prepares a neighbours table listing pairwise catchment neighbours. Used as an input to `builder()` and `builder_reserve()`.
+Prepares a neighbours table listing pairwise catchment neighbours. Used as an input to `builder()`.
 
 **seeds()**
 
 Prepares a seeds table listing catchments to use as seeds when building benchmarks. Used as an input to `builder()`.
 
-**seeds_reserve()**
-
-Prepares a seeds table where seeds are grouped by reserves. Used as an input to `builder_reserve()`.
-
 **builder()**
 
-Prepares all input files and parameters and passes them to the BUILDER executable, run in catchment mode where each seed is an individual catchment. Each seed is built into a benchmark.
+Prepares all input files and parameters and passes them to the BUILDER executable where each seed is built into a benchmark.
 
-**builder_reserve()**
-
-Prepares all input files and parameters and passes them to the BUILDER executable, run in reserve mode where each seed is an aggregation of catchments making up an existing reserve. Each reserve aggregation is built out into a benchmark.
 
 ## BUILDER exe
-The functions `builder()` and `builder_reserve()` prepare the input files and parameters and pass them to a command line version of BUILDER executable software that resides inside the `benchmarkbuilder` package. The functions then fetch and return the main BUILDER output table into the R environment. 
+The function `builder()` prepares the input files and parameters and passes them to a command line version of BUILDER executable software that resides inside the `benchmarkbuilder` package. The function then fetches and returns the main BUILDER output table into the R environment. 
 
 Ultimately we hope to rewrite the BUILDER executable in R to avoid having to call a third party application. In the meantime, this package allows users to access and automate calls to BUILDER from R.
 
@@ -72,7 +65,7 @@ Ultimately we hope to rewrite the BUILDER executable in R to avoid having to cal
 The BUILDER executable outputs a number of csv tables describing the catchments making up each benchmark, as well as information on hydrology and a range of summary statistics. There are two options for accessing this output in R:
 
 #### Default behavior
-The default behavior of `builder()` and `builder_reserve()` is for the BUILDER executable to save it's output csv tables to a temp folder. The main output table listing all catchments making up each benchmark is returned by the functions in R and the temp folder is deleted.
+The default behavior for `builder()` is for the BUILDER executable to save it's output csv tables to a temp folder. The main output table listing all catchments making up each benchmark is returned by the function in R and the temp folder is deleted.
 
 This workflow works well when a user wants to complete a single BUILDER run and process the subsequent benchmarks using the various functions in the `beaconstools` package. This workflow is also the safest option because it avoids file path issues that can cause the BUILDER executable to crash if an invalid directory is provided.
 
@@ -80,9 +73,9 @@ This workflow works well when a user wants to complete a single BUILDER run and 
 If an output folder directory is provided using the `out_dir` argument, the BUILDER executable will attempt to save the output files to this folder. The folder will not be deleted after the function runs, and the main output table listing all catchments making up each benchmark is still returned (this is the file name ending in 'COLUMN_All_Unique_BAs.csv'). This workflow gives the user access to all BUILDER executable output files. It can also be useful for automating multiple `builder()` calls and saving the output in different folders to be accessed later using the `beaconstools` package.
 
 #### beaconstools
-The output from `builder()` and `builder_reserve()` is a table listing all catchments associated with each benchmark. If an `out_dir` was provided, this table can also be accessed using `read.csv()` from the `out_dir` (file name ending in 'COLUMN_All_Unique_BAs.csv'). All subsequent processing, such as creating polygons of benchmarks and assessing ecological attributes is done using `beaconstools`. Examples of this workflow are shown below.
+The output from `builder()` is a table listing all catchments associated with each benchmark. If an `out_dir` was provided, this table can also be accessed using `read.csv()` from the `out_dir` (file name ending in 'COLUMN_All_Unique_BAs.csv'). All subsequent processing, such as creating polygons of benchmarks and assessing ecological attributes is done using `beaconstools`. Below we demonstrate a simple example of running `builder()` and using `beaconstools` to generate shapefiles.
 
-## Example using catchments seeds
+## Example: running `builder()` and creating polygons
 
 ```{r message=FALSE, fig.width=7, fig.height=5}
 library(benchmarkbuilder)
@@ -95,13 +88,14 @@ seed <- seeds(catchments_sf = builder_catchments_sample,
              filter_intactness_col = "intact", filter_intactness_threshold = 1,
              areatarget_value = 500000000)
 
-# Run builder() using the catchments, the seeds table defining the 500km2 area target for the 2527 seeds, and the neighbours table
-# Only build benchmarks with catchments that are 80% intact, and only return benchmarks with an area-weighted intactness of at least 95%
+# Run builder() using the catchments, the seeds table with 500km2 area target, and the neighbours table
+# Only build benchmarks with catchments that are 80% intact 
+# Only return benchmarks with an area-weighted intactness of at least 95%
 benchmarks_tab <- builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
                           catchment_level_intactness = 0.8, benchmark_level_intactness = 0.95)
 
-# Note that the same table can be created using the out_dir option shown below.
-# Note that the BUILDER output table has an OID column which is automatically removed when used in beaconstools
+# Note: the same table can be created using the out_dir option shown below.
+# Note: the BUILDER output table has an OID column which is automatically removed when used in beaconstools
 #
 # benchmarks_dir <- file.path(tempdir(), "builder_output")
 # builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
@@ -110,7 +104,8 @@ benchmarks_tab <- builder(catchments_sf = builder_catchments_sample, seeds = see
 # benchmarks_path <- list.files(benchmarks_dir, pattern = "COLUMN_All_Unique_BAs.csv", full.names = TRUE)
 # benchmarks_tab <- read.csv(benchmarks_path)
 
-# BUILDER created 166 benchmarks that met the area target using 80% intactn catchments, and met the 95% area-weighted intactness threshold
+# BUILDER created 166 benchmarks that met the area target using 80% intact catchments, and met the 95% 
+# area-weighted intactness threshold
 # View the output table listing the catchments making up the 166 returned benchmarks
 head(benchmarks_tab)
 
@@ -124,7 +119,7 @@ benchmarks_poly <- dissolve_catchments_from_table(catchments_sf = builder_catchm
                                              input_table = benchmarks_tab, 
                                              out_feature_id = "network")
 
-# Make map of the catchments, coloured green if intactness > 80%
+# Make map of the catchments, colored green if intactness > 80%
 # Add the outlines of all 166 benchmarks
 # Highlight one benchmark in yellow as an example
 plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
@@ -143,59 +138,3 @@ plot(benchmarks_poly$geometry[75], add = T, border = "gold", lwd = 2)
 
 ```
 
-## Example using reserve seeds
-
-```{r message=FALSE, fig.width=7, fig.height=5}
-
-# Add an area target column to three existing reserves with a value of 1000 km2
-existing_reserves_sample$Areatarget <- 1000000000
-
-# Prepare the reserve seeds table for builder
-seed <- seeds_reserve(catchments_sf = builder_catchments_sample,
-                       reserve_polygons = existing_reserves_sample,
-                       name_col = "reserve", areatarget_col = "Areatarget")
-
-# Run builder_reserve() using the catchments, the seeds table defining the 1000 km2 area target, and the neighbours table
-# Use all catchments regardless of intactness to build benchmarks, but only return benchmarks with an area-weighted intactness of at least 80%
-reserve_benchmarks_tab <- builder_reserve(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
-                 catchment_level_intactness = 0, benchmark_level_intactness = 0.8)
-
-
-# BUILDER created three benchmarks, one for each existing reserve.
-# View the output table listing the catchments making up the three returned benchmarks
-head(reserve_benchmarks_tab)
-
-# Use beaconstools to convert benchmarks to polygons
-reserve_benchmarks_poly <- dissolve_catchments_from_table(catchments_sf = builder_catchments_sample, 
-                                             input_table = reserve_benchmarks_tab, 
-                                             out_feature_id = "network")
-
-# Make map of the catchments, coloured green if intactness > 80%
-# Add the outlines of the existing reserves (thick black line), and the benchmarks building off the reserves (thin black line)
-
-# Plot benchmark 1
-# Note how the the benchmark includes the <80% intact catchments because we set catchment level intactness to 0
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, col = 'grey', add = T)
-plot(existing_reserves_sample$geometry[1], add=T, lwd = 2)
-plot(reserve_benchmarks_poly$geometry[1], add = T)
-
-# Plot benchmark 2
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, col = 'grey', add = T)
-plot(existing_reserves_sample$geometry[2], add=T, lwd = 2)
-plot(reserve_benchmarks_poly$geometry[2], add = T)
-
-# Plot benchmark 3
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, col = 'grey', add = T)
-plot(existing_reserves_sample$geometry[3], add=T, lwd = 2)
-plot(reserve_benchmarks_poly$geometry[3], add = T)
-
-# Show the individual catchments in benchmark 3
-plot(reserve_benchmarks_poly$geometry[3])
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], col = 'seagreen3', border = 'grey40', add = T)
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], col = 'grey', border = 'grey40', add = T)
-plot(existing_reserves_sample$geometry[3], add=T, lwd = 3)
-plot(reserve_benchmarks_poly$geometry[3], add = T, lwd = 2)
-```
