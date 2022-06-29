@@ -347,7 +347,11 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
                     ){
 
   # builder path
-  builder_cmd <- system.file("exec", "BenchmarkBuilder_cmd.exe", package = "benchmarkbuilder")
+  if(exists("builder_local_path")){
+    builder_cmd <- builder_local_path # This is a temporary solution to avoid publishing builder.exe on github during the review process.
+  } else{
+    builder_cmd <- system.file("exec", "BenchmarkBuilder_cmd.exe", package = "benchmarkbuilder")
+  }
 
   # set up output directory. Default is a temp folder. out_dir can be used if builder output should be saved, e.g. in a looped analysis.
   if(is.null(out_dir)){
