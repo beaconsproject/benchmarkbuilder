@@ -454,7 +454,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
   )
 
   # call BUILDER
-  base::system(system_string)
+  system(system_string)
 
   # prep for HANDLER
   h1 <- list.files(outdir, pattern = "_ROW.csv", full.names = TRUE)
@@ -481,7 +481,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
                           area_target_props
                           )
   # call HANDLER
-  base::system(handler_string)
+  system(handler_string)
 
   # Load output tables
   benchmarks_out <- list.files(outdir, pattern = "COLUMN_All_Unique_BAs.csv")
