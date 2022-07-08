@@ -125,9 +125,6 @@ folder will be used and deleted after the function completes. As well as providi
 an output directory is useful in a looped workflow with multiple calls to BUILDER producing multiple sets of output files. In this
 workflow a different output directory can be used to save each set of output files which can later be processed using the \code{beaconstools} package.
 
-The \code{builder()} function calls BUILDER in 'catchment' mode where each seed is an individual catchment that will be built into a
-benchmark. See \code{builder_reserve()} for calling BUILDER in 'reserve' mode.
-
 The main parameters to adjust when building benchmarks are:
 \itemize{
 \item{Area target: Set in the seeds table, this defines the minimum size for each benchmark.}
