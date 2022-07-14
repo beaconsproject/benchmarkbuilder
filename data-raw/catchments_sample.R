@@ -5,16 +5,29 @@ library(dplyr)
 library(devtools)
 
 # load catchments from kba project (just using this dataset because its synced on my laptop, could also load full dataset from gisdata)
-catchments <- sf::st_read("C:/Users/MAEDW7/Dropbox (BEACONs)/RENR491 Capstone 2022/gisdata/catchments/YRW_catch50K.shp")
+#catchments <- sf::st_read("C:/Users/MAEDW7/Dropbox (BEACONs)/RENR491 Capstone 2022/gisdata/catchments/YRW_catch50K.shp")
+catchments <- sf::st_read("C:/Users/MAEDW7/Dropbox (BEACONs)/gisdata/catchments/boreal_vPB23.shp")
 
 builder_catchments_sample <- catchments %>%
-  dplyr::filter(FDAHUC8 == "09EA") %>%
-  dplyr::select(CATCHNUM, SKELUID, STRAHLER, ORDER1, ORDER2, ORDER3, BASIN, Area_Land, Area_Water, Area_Total, STRMLEN_1, FDAHUC8, ZONE, MDA, Isolated, intact) %>%
+  #dplyr::filter(FDAHUC8 == "09EA") %>%
+  dplyr::filter(FDA_M == "09EA") %>%
+  #dplyr::select(CATCHNUM, SKELUID, STRAHLER, ORDER1, ORDER2, ORDER3, BASIN, Area_Land, Area_Water, Area_Total, STRMLEN_1, FDAHUC8, ZONE, MDA, Isolated, intact) %>%
+  dplyr::select(CATCHNUM, SKELUID, STRAHLER, ORDER1, ORDER2, ORDER3, BASIN, Area_land, Area_water, Area_total, length_m, FDA_M, MDAzone, Isolated, CA2010) %>%
   sf::st_snap(x = ., y = ., tolerance = 0.1)
+
+# change names to match previously used catchments
+names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_land"] <- "Area_Land"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_water"] <- "Area_Water"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_total"] <- "Area_Total"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "FDA_M"] <- "FDAHUC8"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "length_m"] <- "STRMLEN"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "MDAzone"] <- "ZONE"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "CA2010"] <- "intact"
 
 builder_catchments_sample$CATCHNUM <- as.integer(builder_catchments_sample$CATCHNUM)
 builder_catchments_sample$SKELUID <- as.integer(builder_catchments_sample$SKELUID)
-names(builder_catchments_sample)[names(builder_catchments_sample) == "STRMLEN_1"] <- "STRMLEN"
+builder_catchments_sample$ORDER2 <- as.numeric(builder_catchments_sample$ORDER2)
+
 
 builder_catchments_sample$ZONE <- as.character(builder_catchments_sample$ZONE)
 builder_catchments_sample$BASIN <- as.character(builder_catchments_sample$BASIN)

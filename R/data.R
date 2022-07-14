@@ -1,8 +1,8 @@
 #' Sample of catchments dataset.
 #'
-#' A subset of the BEACONs catchments dataset from FDA 09EA.
+#' A subset of the BEACONs 1:1,000,000 catchments dataset from FDA 09EA.
 #'
-#' @format A sf object with 3263 features and 16 fields.
+#' @format A sf object with 108 features and 15 fields.
 #' @source \url{https://beaconsproject.ualberta.ca/}
 "builder_catchments_sample"
 

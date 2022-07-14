@@ -77,6 +77,11 @@ The output from `builder()` is a table listing all catchments associated with ea
 
 ## Example: running `builder()` and creating polygons
 
+```{r, echo=F}
+# DELETE THIS WHEN CLOSING #14
+builder_local_path <- "C:/Temp/BenchmarkBuilder_cmd.exe"
+```
+
 ```{r message=FALSE, fig.width=7, fig.height=5}
 library(benchmarkbuilder)
 
@@ -104,7 +109,7 @@ benchmarks_tab <- builder(catchments_sf = builder_catchments_sample, seeds = see
 # benchmarks_path <- list.files(benchmarks_dir, pattern = "COLUMN_All_Unique_BAs.csv", full.names = TRUE)
 # benchmarks_tab <- read.csv(benchmarks_path)
 
-# BUILDER created 166 benchmarks that met the area target using 80% intact catchments, and met the 95% 
+# BUILDER created 10 benchmarks that met the area target using 80% intact catchments, and met the 95% 
 # area-weighted intactness threshold
 # View the output table listing the catchments making up the 166 returned benchmarks
 head(benchmarks_tab)
@@ -125,16 +130,16 @@ benchmarks_poly <- dissolve_catchments_from_table(catchments_sf = builder_catchm
 plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
 plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, col = 'grey', add = T)
 plot(benchmarks_poly$geometry, add = T, border = 'darkgreen')
-plot(benchmarks_poly$geometry[75], add = T, border = "gold", lwd = 2)
+plot(benchmarks_poly$geometry[10], add = T, border = "gold", lwd = 2)
 
 # Note how benchmarks only cover the green catchments areas because of the 80% catchment level intactness value used.
 # Also note that not all patches of 80% intact catchments contain benchmarks. This is because the area and hydrology 
 # requirements could not be met in those regions.
 
 # Show the individual catchments within the example benchmark
-plot(benchmarks_poly$geometry[75])
+plot(benchmarks_poly$geometry[10])
 plot(builder_catchments_sample$geometry, add = T, col = 'seagreen3', border = 'grey40')
-plot(benchmarks_poly$geometry[75], add = T, border = "gold", lwd = 2)
+plot(benchmarks_poly$geometry[10], add = T, border = "gold", lwd = 2)
 
 ```
 
