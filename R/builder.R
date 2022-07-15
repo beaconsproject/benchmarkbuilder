@@ -238,9 +238,10 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
     sf::st_agr(areatarget_polygon) = "constant"
     sf::st_agr(filtered_catchments) = "constant"
 
-    filtered_catchments <- filtered_catchments %>%
+    filtered_catchments <- suppressWarnings(filtered_catchments %>%
       sf::st_join(areatarget_polygon, left = FALSE, largest = TRUE) %>% # inner join, assign catchnum area target to polygon value with largest overlap
       dplyr::mutate(Areatarget = as.integer(ceiling(.data[[areatarget_polygon_col]]))) # round up to next m2
+    )
 
   } else{
     stop("Catchments filtered but no valid area target method provided")

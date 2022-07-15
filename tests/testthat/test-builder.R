@@ -63,11 +63,9 @@ test_that("polygon filter works with intactness col", {
 test_that("polygon filter works with areatarget_polygon_col", {
   test_poly <- builder_catchments_sample[1:10,]
   test_poly$areatarget <- 5000
-  expect_warning(
-    expect_equal(seeds(catchments_sf = builder_catchments_sample, filter_polygon = test_poly, areatarget_polygon = test_poly, areatarget_polygon_col = "areatarget"),
-               dplyr::tibble(CATCHNUM=builder_catchments_sample$CATCHNUM[1:10], Areatarget = as.integer(rep(5000, 10)))
-               ),
-    "attribute variables are assumed")
+  expect_equal(seeds(catchments_sf = builder_catchments_sample, filter_polygon = test_poly, areatarget_polygon = test_poly, areatarget_polygon_col = "areatarget"),
+             dplyr::tibble(CATCHNUM=builder_catchments_sample$CATCHNUM[1:10], Areatarget = as.integer(rep(5000, 10)))
+             )
 })
 
 test_that("error when areatarget_polygon_col contains a non-numeirc value", {
