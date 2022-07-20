@@ -5,7 +5,7 @@
 \alias{builder_catchments_sample}
 \title{Sample of catchments dataset.}
 \format{
-A sf object with 3263 features and 16 fields.
+A sf object with 108 features and 15 fields.
 }
 \source{
 \url{https://beaconsproject.ualberta.ca/}
@@ -14,6 +14,6 @@ A sf object with 3263 features and 16 fields.
 builder_catchments_sample
 }
 \description{
-A subset of the BEACONs catchments dataset from FDA 09EA.
+A subset of the BEACONs 1:1,000,000 catchments dataset from FDA 09EA.
 }
 \keyword{datasets}
