@@ -67,13 +67,13 @@ The BUILDER executable outputs a number of csv tables describing the catchments 
 #### Default behavior
 The default behavior for `builder()` is for the BUILDER executable to save it's output csv tables to a temp folder. The main output table listing all catchments making up each benchmark is returned by the function in R and the temp folder is deleted.
 
-This workflow works well when a user wants to complete a single BUILDER run and process the subsequent benchmarks using the various functions in the `beaconstools` package. This workflow is also the safest option because it avoids file path issues that can cause the BUILDER executable to crash if an invalid directory is provided.
+Using the default behavior works well when a user wants to complete a single BUILDER run and process the subsequent benchmarks using the various functions in the `beaconstools` package. This is also the safest option because it avoids file path issues that can cause the BUILDER executable to crash if an invalid directory is provided.
 
 #### out_dir
-If an output folder directory is provided using the `out_dir` argument, the BUILDER executable will attempt to save the output files to this folder. The folder will not be deleted after the function runs, and the main output table listing all catchments making up each benchmark is still returned (this is the file name ending in 'COLUMN_All_Unique_BAs.csv'). This workflow gives the user access to all BUILDER executable output files. It can also be useful for automating multiple `builder()` calls and saving the output in different folders to be accessed later using the `beaconstools` package.
+If an output folder directory is provided using the `out_dir` argument, the BUILDER executable will attempt to save the output files to this folder. The folder will not be deleted after the function runs, and the main output table listing all catchments making up each benchmark is still returned (this is the file name ending in 'COLUMN_All_Unique_BAs.csv'). This approach gives the user access to all BUILDER executable output files which can be loaded using `read.csv()`. It can also be useful for automating multiple `builder()` calls and saving the output in different folders to be accessed later using the `beaconstools` package.
 
 #### beaconstools
-The output from `builder()` is a table listing all catchments associated with each benchmark. If an `out_dir` was provided, this table can also be accessed using `read.csv()` from the `out_dir` (file name ending in 'COLUMN_All_Unique_BAs.csv'). All subsequent processing, such as creating polygons of benchmarks and assessing ecological attributes is done using `beaconstools`. Below we demonstrate a simple example of running `builder()` and using `beaconstools` to generate shapefiles.
+All subsequent processing, such as creating polygons of benchmarks and assessing ecological attributes is done using `beaconstools`. Below we demonstrate a simple example of running `builder()` and using `beaconstools` to generate shapefiles.
 
 ## Example: running `builder()` and creating polygons
 
