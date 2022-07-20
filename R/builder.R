@@ -372,6 +372,9 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
     }
   }
 
+  # Count benchmark tables in out_dir
+  benchmarks_out_pre <- length(list.files(outdir, pattern = "COLUMN_All_Unique_BAs.csv"))
+
   # save seeds table to outdir
   message("checking seeds table")
   seeds <- make_all_integer(seeds)
@@ -486,17 +489,16 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
 
   # Load output tables
   benchmarks_out <- list.files(outdir, pattern = "COLUMN_All_Unique_BAs.csv")
-  if(length(benchmarks_out) > 0){
+  if(length(benchmarks_out) > benchmarks_out_pre){ # If new table was added, it becomes the output path
     if(length(benchmarks_out) > 1){
       benchmarks_out <- benchmarks_out[[length(benchmarks_out)]]
-      warning("Multiple benchmark tables in output folder")
+      warning("Multiple benchmark tables in output folder, returning newest")
     }
-  } else{
-    # clean up before throwing error
+  } else{ # If no new table was added, for out_dir, do nothing. For temp dir, delete. Then throw error.
     if(is.null(out_dir)){
       unlink(outdir, recursive = TRUE)
     }
-    stop("Can't find benchmarks table")
+    stop("No output produced. Check parameters, file paths and input tables.")
   }
 
   message(paste0("Returning BUILDER table: ", benchmarks_out))

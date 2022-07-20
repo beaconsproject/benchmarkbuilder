@@ -175,3 +175,32 @@ test_that("test an empty returned table, should return NULL", {
   )
 })
 
+test_that("test multiple files in out_dir - returns most recent and gives warning", {
+  test_poly <- builder_catchments_sample[1:10,]
+  seedz1 <- seeds(catchments_sf = builder_catchments_sample, filter_polygon = test_poly, areatarget_value = 100000000)
+  seedz2 <- seeds(catchments_sf = builder_catchments_sample, filter_polygon = test_poly, areatarget_value = 50000000)
+
+  unlink(file.path(tempdir(), "builder2"), recursive = TRUE)
+  builder(catchments_sf = builder_catchments_sample, seeds = seedz1, neighbours = nghbrs, out_dir = file.path(tempdir(), "builder2")) # this becomes an old table
+  old_results <- list.files(file.path(tempdir(), "builder2"), pattern = "COLUMN_All_Unique_BAs.csv", full.names = TRUE)
+  file.rename(old_results, file.path(tempdir(), "builder2", "2021_01_01_1513_ROW_BLIT_i100_t100_COLUMN_All_Unique_BAs.csv"))
+
+  expect_warning(
+    builder_out1 <- builder(catchments_sf = builder_catchments_sample, seeds = seedz2, neighbours = nghbrs, out_dir = file.path(tempdir(), "builder2")), # This becomes the second table, we want to return this one...
+    "Multiple benchmark tables in output folder"
+  )
+
+  builder_out2 <- builder(catchments_sf = builder_catchments_sample, seeds = seedz2, neighbours = nghbrs) # ... so check it matches this one made in a different folder
+  expect_equal(builder_out1, builder_out2)
+  unlink(file.path(tempdir(), "builder2"), recursive = TRUE)
+})
+
+test_that("returns 'no output produced' when builder fails", {
+  test_poly <- builder_catchments_sample[1,]
+  seedz <- seeds(catchments_sf = builder_catchments_sample, filter_polygon = test_poly, areatarget_value = 1000000000)
+
+  expect_error(
+    builder(catchments_sf = builder_catchments_sample, seeds = seedz, neighbours = nghbrs, catchment_level_intactness = "x"),
+    "No output produced"
+  )
+})
