@@ -342,7 +342,7 @@ builder <- function(catchments_sf, seeds, neighbours, # input tables
                     area_type = "land", construct_benchmarks = TRUE,  area_target_multiplier = 1,
                     handle_isolated_catchments = TRUE, output_upstream = FALSE, output_downstream = FALSE, output_hydrology_metrics = FALSE,
                     area_land = "Area_Land", area_water = "Area_Water",
-                    skeluid = "SKELUID", catchnum = "CATCHNUM", subzone = "FDAHUC8", zone = "ZONE", basin = "BASIN", order1 = "ORDER1",
+                    skeluid = "SKELUID", catchnum = "CATCHNUM", subzone = "FDA", zone = "MDA", basin = "BASIN", order1 = "ORDER1",
                     order2 = "ORDER2", order3 = "ORDER3", stream_length = "STRMLEN", intactness = "intact", isolated = "Isolated",
                     benchmark_identifier = "PB", handler_summary = FALSE, benchmark_level_intactness_props = '""', area_target_props = '""'
                     ){

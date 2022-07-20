@@ -19,9 +19,9 @@ builder_catchments_sample <- catchments %>%
 names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_land"] <- "Area_Land"
 names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_water"] <- "Area_Water"
 names(builder_catchments_sample)[names(builder_catchments_sample) == "Area_total"] <- "Area_Total"
-names(builder_catchments_sample)[names(builder_catchments_sample) == "FDA_M"] <- "FDAHUC8"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "FDA_M"] <- "FDA"
 names(builder_catchments_sample)[names(builder_catchments_sample) == "length_m"] <- "STRMLEN"
-names(builder_catchments_sample)[names(builder_catchments_sample) == "MDAzone"] <- "ZONE"
+names(builder_catchments_sample)[names(builder_catchments_sample) == "MDAzone"] <- "MDA"
 names(builder_catchments_sample)[names(builder_catchments_sample) == "CA2010"] <- "intact"
 
 builder_catchments_sample$CATCHNUM <- as.integer(builder_catchments_sample$CATCHNUM)
@@ -29,7 +29,7 @@ builder_catchments_sample$SKELUID <- as.integer(builder_catchments_sample$SKELUI
 builder_catchments_sample$ORDER2 <- as.numeric(builder_catchments_sample$ORDER2)
 
 
-builder_catchments_sample$ZONE <- as.character(builder_catchments_sample$ZONE)
+builder_catchments_sample$MDA <- as.character(builder_catchments_sample$MDA)
 builder_catchments_sample$BASIN <- as.character(builder_catchments_sample$BASIN)
 builder_catchments_sample$Isolated <- as.integer(builder_catchments_sample$Isolated)
 
