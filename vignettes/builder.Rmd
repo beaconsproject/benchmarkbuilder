@@ -82,7 +82,7 @@ All subsequent processing, such as creating polygons of benchmarks and assessing
 builder_local_path <- "C:/Temp/BenchmarkBuilder_cmd.exe"
 ```
 
-```{r message=FALSE, fig.width=7, fig.height=5}
+```{r, message=FALSE, fig.width=7, fig.height=5, tidy=TRUE}
 library(benchmarkbuilder)
 
 # generate neighbours table for catchments
@@ -98,16 +98,6 @@ seed <- seeds(catchments_sf = builder_catchments_sample,
 # Only return benchmarks with an area-weighted intactness of at least 95%
 benchmarks_tab <- builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
                           catchment_level_intactness = 0.8, benchmark_level_intactness = 0.95)
-
-# Note: the same table can be created using the out_dir option shown below.
-# Note: the BUILDER output table has an OID column which is automatically removed when used in beaconstools
-#
-# benchmarks_dir <- file.path(tempdir(), "builder_output")
-# builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
-#                          catchment_level_intactness = 0.8, benchmark_level_intactness = 0.95,
-#                          out_dir = benchmarks_dir)
-# benchmarks_path <- list.files(benchmarks_dir, pattern = "COLUMN_All_Unique_BAs.csv", full.names = TRUE)
-# benchmarks_tab <- read.csv(benchmarks_path)
 
 # BUILDER created 10 benchmarks that met the area target using 80% intact catchments, and met the 95% 
 # area-weighted intactness threshold
@@ -127,14 +117,17 @@ benchmarks_poly <- dissolve_catchments_from_table(catchments_sf = builder_catchm
 # Make map of the catchments, colored green if intactness > 80%
 # Add the outlines of all 166 benchmarks
 # Highlight one benchmark in yellow as an example
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, col = 'seagreen3')
-plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, col = 'grey', add = T)
+plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, 
+     col = 'seagreen3')
+plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, 
+     col = 'grey', add = T)
 plot(benchmarks_poly$geometry, add = T, border = 'darkgreen')
 plot(benchmarks_poly$geometry[10], add = T, border = "gold", lwd = 2)
 
-# Note how benchmarks only cover the green catchments areas because of the 80% catchment level intactness value used.
-# Also note that not all patches of 80% intact catchments contain benchmarks. This is because the area and hydrology 
-# requirements could not be met in those regions.
+# Note how benchmarks only cover the green catchments areas because of the 80% catchment level 
+# intactness value used.
+# Also note that not all patches of 80% intact catchments contain benchmarks. This is because the area 
+# and hydrology requirements could not be met in those regions.
 
 # Show the individual catchments within the example benchmark
 plot(benchmarks_poly$geometry[10])
@@ -143,3 +136,57 @@ plot(benchmarks_poly$geometry[10], add = T, border = "gold", lwd = 2)
 
 ```
 
+## Looping `builder()`
+Often we want to run BUILDER multiple times with different area targets, catchment level intactness values, or benchmark level intactness values. Below is an example of looping the call to `builder()` with a range of benchmark level intactness values. The `out_dir` parameter is used to save the output tables in a folder. We then open the output tables, build the reserves into polygons and save them as shapefiles.
+```{r, message=FALSE, fig.width=7, fig.height=5, warning=FALSE, tidy=TRUE}
+
+# Set a range of benchmark intacntess levels to loop through
+intactness_list <- c(0, 0.5, 0.8, 1)
+
+# Use all catchments as seeds
+seed <- seeds(catchments_sf = builder_catchments_sample, areatarget_value = 500000000)
+
+# Loop through intactness_list, saving the output to outdir
+par(mfrow = c(2,2), mar=c(1,1,1,1))
+for(intactness_i in intactness_list){
+
+  # Set a different out_dir for each run, delete it if it already exists
+  outdir <- file.path(tempdir(), paste0("builder_loop_", intactness_i*100))
+  unlink(outdir, recursive = TRUE)
+  
+  # Call builder, the output table will be returned but we can ignore it because we'll load it 
+  # manually later
+  builder(catchments_sf = builder_catchments_sample, seeds = seed, neighbours = nghbrs,
+                          catchment_level_intactness = 0, benchmark_level_intactness = intactness_i,
+                          out_dir = outdir)
+  
+  # Note that we could use the builder output directly here to build benchmarks. However, in a looped 
+  # analysis, it's often useful to have the builder output saved locally for future reference. 
+  # We therefore use the out_dir argument and load the output table (the table ending in 
+  # COLUMN_All_Unique_BAs.csv) manually.
+  
+  file_path <- list.files(outdir, pattern = "COLUMN_All_Unique_BAs.csv", full.names = TRUE)
+  table_i <- read.csv(file_path)
+  
+  # Note: the BUILDER output table has an OID column which is automatically removed when used 
+  # in beaconstools
+  
+  # We can now convert the table into polygons (using beaconstools) and save the polygons for future use
+  reserve_poly <- dissolve_catchments_from_table(
+    catchments_sf = builder_catchments_sample, 
+    input_table = table_i, 
+    out_feature_id = "network")
+  
+  nrow(reserve_poly)
+  
+  # Plot the polygons
+  plot(builder_catchments_sample$geometry[builder_catchments_sample$intact>=0.8], lty = 0, 
+       col = 'seagreen3', main = paste0("Intactness: ",intactness_i))
+  plot(builder_catchments_sample$geometry[builder_catchments_sample$intact<0.8], lty = 0, 
+       col = 'grey', add = T)
+  plot(reserve_poly$geometry, add = T, border = 'darkgreen')
+  
+  # save as shp
+  st_write(reserve_poly, file.path(outdir, "polygons.shp"), quiet = TRUE)
+}
+```

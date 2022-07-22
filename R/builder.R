@@ -70,7 +70,7 @@ neighbours <- function(catchments_sf){
 #'  \code{catchments_sf} will be added to the seeds table:
 #'  \itemize{
 #'    \item{If \code{filter_intactness_col} and \code{filter_intactness_threshold} are provided, catchments will be filtered
-#'    to include those with an intactness value >= the threshold.}
+#'    to include those with an intactness value >= the \code{filter_intactness_threshold}.}
 #'    \item{A \code{filter_polygon} can be provided to filter the catchments based on their centroid (more
 #'    specifically, \code{sf::st_point_on_surface()}) falling inside the \code{filter_polygon}.}
 #'    }
@@ -274,6 +274,7 @@ seeds <- function(catchments_sf, filter_intactness_col = NULL, filter_intactness
 #' folder will be used and deleted after the function completes. As well as providing access to the full list of BUILDER output tables,
 #' an output directory is useful in a looped workflow with multiple calls to BUILDER producing multiple sets of output files. In this
 #' workflow a different output directory can be used to save each set of output files which can later be processed using the \code{beaconstools} package.
+#' The main output file listing benchmark names and their catchments is named "*_COLUMN_All_Unique_BAs.csv".
 #'
 #'
 #' The main parameters to adjust when building benchmarks are:
